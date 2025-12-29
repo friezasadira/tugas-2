@@ -1,0 +1,29 @@
+openapi: 3.0.0
+info:
+  title: distributed-sync-system
+  version: "0.1"
+paths:
+  /raft/status:
+    get:
+      responses:
+        "200": { description: OK }
+  /locks/acquire:
+    post:
+      responses:
+        "200": { description: OK }
+        "409": { description: not_leader }
+  /locks/release:
+    post:
+      responses:
+        "200": { description: OK }
+        "409": { description: not_leader }
+  /locks/state:
+    get:
+      responses:
+        "200": { description: OK }
+        "409": { description: not_leader }
+  /locks/wfg:
+    get:
+      responses:
+        "200": { description: OK }
+        "409": { description: not_leader }

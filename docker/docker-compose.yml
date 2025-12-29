@@ -1,0 +1,62 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  node1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    environment:
+      - NODE_ID=node1
+      - HTTP_PORT=8000
+      - METRICS_PORT=9000
+      - PEERS=http://node1:8000,http://node2:8000,http://node3:8000
+      - REDIS_URL=redis://redis:6379/0
+      - RAFT_DATA_DIR=/data
+    volumes:
+      - ./data/node1:/data
+    ports:
+      - "8001:8000"
+      - "9001:9000"
+    depends_on:
+      - redis
+
+  node2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    environment:
+      - NODE_ID=node2
+      - HTTP_PORT=8000
+      - METRICS_PORT=9000
+      - PEERS=http://node1:8000,http://node2:8000,http://node3:8000
+      - REDIS_URL=redis://redis:6379/0
+      - RAFT_DATA_DIR=/data
+    volumes:
+      - ./data/node2:/data
+    ports:
+      - "8002:8000"
+      - "9002:9000"
+    depends_on:
+      - redis
+
+  node3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    environment:
+      - NODE_ID=node3
+      - HTTP_PORT=8000
+      - METRICS_PORT=9000
+      - PEERS=http://node1:8000,http://node2:8000,http://node3:8000
+      - REDIS_URL=redis://redis:6379/0
+      - RAFT_DATA_DIR=/data
+    volumes:
+      - ./data/node3:/data
+    ports:
+      - "8003:8000"
+      - "9003:9000"
+    depends_on:
+      - redis
