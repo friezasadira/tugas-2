@@ -1,29 +1,212 @@
 openapi: 3.0.0
 info:
   title: distributed-sync-system
-  version: "0.1"
+  version: "0.2"
+
+servers:
+  - url: http://localhost:8001
+    description: node1
+  - url: http://localhost:8002
+    description: node2
+  - url: http://localhost:8003
+    description: node3
+
 paths:
+  /health:
+    get:
+      responses:
+        "200": { description: OK }
+
   /raft/status:
     get:
       responses:
         "200": { description: OK }
+
+  /raft/request_vote:
+    post:
+      responses:
+        "200": { description: OK }
+
+  /raft/append_entries:
+    post:
+      responses:
+        "200": { description: OK }
+
   /locks/acquire:
     post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LockAcquireRequest" }
+            example: { resource: "A", mode: "X", client_id: "c1" }
       responses:
         "200": { description: OK }
         "409": { description: not_leader }
+
   /locks/release:
     post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LockReleaseRequest" }
+            example: { resource: "A", client_id: "c1" }
       responses:
         "200": { description: OK }
         "409": { description: not_leader }
+
   /locks/state:
     get:
       responses:
         "200": { description: OK }
         "409": { description: not_leader }
+
   /locks/wfg:
     get:
       responses:
         "200": { description: OK }
         "409": { description: not_leader }
+
+  /queue/route:
+    get:
+      parameters:
+        - in: query
+          name: queue_key
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /queue/enqueue:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QueueEnqueueRequest" }
+            example: { queue_key: "test", payload: { msg: "hello" } }
+      responses:
+        "200": { description: OK }
+
+  /queue/consume:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QueueConsumeRequest" }
+            example: { queue_key: "test", consumer: "c1", block_ms: 1000 }
+      responses:
+        "200": { description: OK }
+
+  /queue/ack:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QueueAckRequest" }
+            example: { queue_key: "test", id: "1767123629232-0" }
+      responses:
+        "200": { description: OK }
+
+  /queue/pending:
+    get:
+      parameters:
+        - in: query
+          name: queue_key
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /cache/get:
+    get:
+      parameters:
+        - in: query
+          name: key
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /cache/put:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CachePutRequest" }
+            example: { key: "k1", value: "v1" }
+      responses:
+        "200": { description: OK }
+
+  /cache/invalidate:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CacheInvalidateRequest" }
+            example: { key: "k1", from: "node2" }
+      responses:
+        "200": { description: OK }
+
+  /cache/state:
+    get:
+      responses:
+        "200": { description: OK }
+
+components:
+  schemas:
+    LockAcquireRequest:
+      type: object
+      required: [resource, mode, client_id]
+      properties:
+        resource: { type: string }
+        mode: { type: string, enum: ["S", "X"] }
+        client_id: { type: string }
+
+    LockReleaseRequest:
+      type: object
+      required: [resource, client_id]
+      properties:
+        resource: { type: string }
+        client_id: { type: string }
+
+    QueueEnqueueRequest:
+      type: object
+      required: [queue_key]
+      properties:
+        queue_key: { type: string }
+        payload: { type: object, additionalProperties: true }
+
+    QueueConsumeRequest:
+      type: object
+      required: [queue_key]
+      properties:
+        queue_key: { type: string }
+        consumer: { type: string }
+        block_ms: { type: integer, default: 1000 }
+
+    QueueAckRequest:
+      type: object
+      required: [queue_key, id]
+      properties:
+        queue_key: { type: string }
+        id: { type: string }
+
+    CachePutRequest:
+      type: object
+      required: [key, value]
+      properties:
+        key: { type: string }
+        value: { type: string }
+
+    CacheInvalidateRequest:
+      type: object
+      required: [key]
+      properties:
+        key: { type: string }
+        from: { type: string }
